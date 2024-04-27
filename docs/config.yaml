@@ -1,0 +1,16 @@
+orchestrator:
+  base_llm: "model_gpt4"
+  db_connection:
+    host: "localhost"
+    port: 5432
+    user: "admin"
+    password: "securepassword"
+  logging:
+    level: "INFO"
+    format: "standard"
+  health_checks:
+    interval_seconds: 3600
+    enabled: true
+  error_recovery:
+    auto_restart: true
+    retry_intervals: [1, 5, 15]
