@@ -9,3 +9,25 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9.33"
+rottie_inference = { path = "./rottie_inference" }
+rottie_training = { path = "./rottie_training" }
+data = { path = "./data" }
+db = { path = "./db" }
+action = { path = "./action" }
+hf-hub = "0.3.0"
+accelerate-src = { version = "0.3.2", optional = true }
+anyhow = "1.0.79"
+candle = { git = "https://github.com/huggingface/candle", package = "candle-core" }
+candle-nn = { git = "https://github.com/huggingface/candle" }
+candle-transformers = { git = "https://github.com/huggingface/candle" }
+
+[features]
+default = []
+accelerate = [
+  "candle/accelerate",
+  "candle-nn/accelerate",
+  "candle-transformers/accelerate",
+]
+metal = ["candle/metal", "candle-nn/metal"]
