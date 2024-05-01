@@ -9,11 +9,26 @@ pub struct Config {
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct Orchestrator {
-    pub base_llm: String,
+    pub llm_info: LlmInfo,
+    pub llm_train: LlmTrain,
     pub db_connection: DbConnection,
     pub logging: Logging,
     pub health_checks: HealthChecks,
     pub error_recovery: ErrorRecovery,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct LlmInfo {
+    pub chat_template: String,
+    pub creativity: f64,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct LlmTrain {
+    pub enabled: bool,
+    pub params: Vec<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -49,11 +64,30 @@ pub struct ErrorRecovery {
 impl Default for Orchestrator {
     fn default() -> Self {
         Orchestrator {
-            base_llm: "model_gpt4".to_string(),
+            llm_info: LlmInfo::default(),
+            llm_train: LlmTrain::default(),
             db_connection: DbConnection::default(),
             logging: Logging::default(),
             health_checks: HealthChecks::default(),
             error_recovery: ErrorRecovery::default(),
+        }
+    }
+}
+
+impl Default for LlmInfo {
+    fn default() -> Self {
+        LlmInfo {
+            chat_template: "You are a helpful assistant.".to_string(),
+            creativity: 0.7,
+        }
+    }
+}
+
+impl Default for LlmTrain {
+    fn default() -> Self {
+        LlmTrain {
+            enabled: false,
+            params: vec!["--epochs".to_string(), "10".to_string()],
         }
     }
 }

@@ -1,4 +1,12 @@
-workspace = { members = [ "action", "data", "db","rottie_inference", "rottie_training"] }
+[workspace]
+members = [ "action", "data", "db","rottie_inference", "rottie_training"]
+
+[workspace.dependencies]
+rottie_inference = { path = "./rottie_inference" }
+rottie_training = { path = "./rottie_training" }
+db = { path = "./db" }
+action = { path = "./action" }
+data = { path = "./data" }
 
 
 [package]
@@ -22,6 +30,9 @@ anyhow = "1.0.79"
 candle = { git = "https://github.com/huggingface/candle", package = "candle-core" }
 candle-nn = { git = "https://github.com/huggingface/candle" }
 candle-transformers = { git = "https://github.com/huggingface/candle" }
+uuid = "1.8.0"
+
+
 
 [features]
 default = []

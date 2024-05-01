@@ -1,5 +1,12 @@
 orchestrator:
-  base_llm: "model_gpt4"
+  llm_info:
+    chat_template: "You are a helpful assistant."
+    creativity: 0.7
+  llm_train:
+    enabled: false
+    params:
+      - "--epochs"
+      - "10"
   db_connection:
     host: "localhost"
     port: 5432

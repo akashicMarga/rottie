@@ -131,7 +131,7 @@ impl phi3 {
         }
     }
 
-    pub fn generate(&mut self,prompt: String) -> anyhow::Result<Vec<u32>> {
+    pub fn generate(&mut self,prompt: String) -> anyhow::Result<String> {
         // let mut phi3 = phi3::init();
         // let mut model = phi3.model()?;
         // let tokenizer = phi3.tokenizer()?;
@@ -188,6 +188,7 @@ impl phi3 {
             .unwrap();
         let start_post_prompt = std::time::Instant::now();
         let mut sampled = 0;
+        let mut response_generated = String::new();
         for index in 0..to_sample {
             let input = Tensor::new(&[next_token], &self.device)?.unsqueeze(0)?;
             let logits = self.model.forward(&input, tokens.len() + index)?;
@@ -206,6 +207,7 @@ impl phi3 {
             all_tokens.push(next_token);
             if let Some(t) = tos.next_token(next_token)? {
                 print!("{t}");
+                response_generated.push_str(&t);
                 std::io::stdout().flush()?;
             }
             sampled += 1;
@@ -228,7 +230,7 @@ impl phi3 {
             sampled as f64 / dt.as_secs_f64(),
         );
     
-        Ok(all_tokens)
+        Ok(response_generated)
     }
 }
 
