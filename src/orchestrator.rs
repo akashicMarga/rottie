@@ -4,38 +4,41 @@ use std::io::{self, Write};
 use uuid::Uuid;
 use serde_yaml::Error;
 use crate::config;
+use db::rocks_db::get_related_chunks;
+use rottie_inference::embeddings::embedding_model;
+
 
 
 pub struct Orchestrator {
     session_id: uuid::Uuid,
     conversation_tracker: Vec<HashMap<String, String>>,
     lm_model: rottie_inference::phi3::phi3,
-    db_model: String,
+    emb_model: rottie_inference::embeddings::embedding_model,
     config: Result<config::Config, Error>
 }
 
 impl Orchestrator {
     pub fn new(session_id: uuid::Uuid, config: Result<config::Config, Error>) -> Self {
         let mut base_llm = rottie_inference::phi3::phi3::init();
-
         let mut conversation_tracker: Vec<HashMap<String, String>> = Vec::new();
+        let mut embedding_model = rottie_inference::embeddings::embedding_model::load_model();
 
         Self {
             session_id,
             conversation_tracker: conversation_tracker,
             lm_model: base_llm,
-            db_model: "rocksdb".to_string(),
+            emb_model: embedding_model,
             config: config
         }
     }
 
-    pub fn run(&mut self)  {
+    pub async fn run(&mut self) {
           
         let initial_system_prompt = match &self.config {
             Ok(ref config) => config.orchestrator.llm_info.chat_template.clone(),
             Err(e) => {
                 eprintln!("Failed to load configuration: {}", e);
-                return; // or handle the error appropriately
+                return ; // or handle the error appropriately
             }
         };
         
@@ -58,10 +61,21 @@ impl Orchestrator {
 
             history.push_str(&format!("This is the user query in this turn that you have to answer {}", input_text));
 
-            println!("history: {}", history);
+            // println!("history: {}", history);
+            let embeddings: Vec<f32> = self.emb_model.get_embeddings(&input_text).unwrap().reshape((384,)).unwrap().to_vec1().unwrap();
+            let k = get_related_chunks(embeddings).await.unwrap();
+            let mut context = vec![];
+            for reference in k.iter() {
+                let releted = reference.get_adjacent_chunks(1, 1).await.unwrap();
+                context.extend(releted);
+            }
+
+            println!("context: {:?}", context);
 
             match self.lm_model.generate(history.clone()) {
                 Ok(response) => {
+                    
+                    
                     println!("Rottie: {:?}", response);
                     let mut turn: HashMap<String,String> = HashMap::new();
                     turn.insert("User".to_string(), input_text.clone());

@@ -157,7 +157,7 @@ pub async fn insert_content(title: &str, text: &str) -> Result<Content, Error> {
 }
 
 
-pub async fn get_releted_chunks(query: Vec<f32>) -> Result<Vec<VectorIndex>, Error> {
+pub async fn get_related_chunks(query: Vec<f32>) -> Result<Vec<VectorIndex>, Error> {
     let db = DB.get().await.clone();
     let mut result = db
         .query("SELECT *, vector::similarity::cosine(vector, $query) AS score FROM vector_index ORDER BY score DESC LIMIT 4")
