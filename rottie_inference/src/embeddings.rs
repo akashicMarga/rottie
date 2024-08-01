@@ -19,15 +19,15 @@ impl embedding_model{
         let config_filename = api.get("config.json").unwrap();
         let tokenizer_filename = api.get("tokenizer.json").unwrap();
         let weights_filename = api.get("pytorch_model.bin").unwrap();
-    
+
         let config = std::fs::read_to_string(config_filename).unwrap();
         let config: Config = serde_json::from_str(&config).unwrap();
-    
+
         let mut tokenizer = Tokenizer::from_file(tokenizer_filename).map_err(E::msg).unwrap();
-    
-        let vb = VarBuilder::from_pth(&weights_filename, DTYPE, &device(false).unwrap()).unwrap();
+
+        let vb = VarBuilder::from_pth(&weights_filename, DTYPE, &device(true).unwrap()).unwrap();
         let model = BertModel::load(vb, &config).unwrap();
-    
+
         if let Some(pp) = tokenizer.get_padding_mut() {
             pp.strategy = tokenizers::PaddingStrategy::BatchLongest
         } else {
@@ -38,40 +38,40 @@ impl embedding_model{
             tokenizer.with_padding(Some(pp));
         }
 
-        
+
         embedding_model{model, tokenizer}
     }
 
-    pub fn get_embeddings(&self, sentence: &str) -> Result<Tensor> {    
+    pub fn get_embeddings(&self, sentence: &str) -> Result<Tensor> {
         // drop any non-ascii characters
         let sentence = sentence
             .chars()
             .filter(|c| c.is_ascii())
             .collect::<String>();
-    
+
         let tokens = self.tokenizer
             .encode_batch(vec![sentence], true)
             .map_err(E::msg)
             .context("Unable to encode sentence")?;
-    
+
         let token_ids = tokens
             .iter()
             .map(|tokens| {
                 let tokens = tokens.get_ids().to_vec();
-                Ok(Tensor::new(tokens.as_slice(), &device(false)?)?)
+                Ok(Tensor::new(tokens.as_slice(), &device(true)?)?)
             })
             .collect::<Result<Vec<_>>>()
             .context("Unable to get token ids")?;
-    
+
         let token_ids = Tensor::stack(&token_ids, 0).context("Unable to stack token ids")?;
         let token_type_ids = token_ids
             .zeros_like()
             .context("Unable to get token type ids")?;
-    
+
         let embeddings = self.model
             .forward(&token_ids, &token_type_ids)
             .context("Unable to get embeddings")?;
-    
+
         let (_n_sentence, n_tokens, _hidden_size) = embeddings
             .dims3()
             .context("Unable to get embeddings dimensions")?;
@@ -80,7 +80,7 @@ impl embedding_model{
         let embeddings = embeddings
             .broadcast_div(&embeddings.sqr()?.sum_keepdim(1)?.sqrt()?)
             .context("Unable to get embeddings broadcast div")?;
-    
+
         Ok(embeddings)
     }
 }

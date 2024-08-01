@@ -19,7 +19,8 @@ async fn connect_db() -> Result<Surreal<Db>, Box<dyn std::error::Error>> {
     // get directory of current binary
     let path = dirs::config_local_dir()
         .expect("Unable to get local config directory")
-        .join("tera").join("database");
+        .join("tera")
+        .join("database");
 
     debug!(path = ?path, "Connecting to database");
 
@@ -60,7 +61,6 @@ async fn connect_db() -> Result<Surreal<Db>, Box<dyn std::error::Error>> {
     Ok(db)
 }
 
-
 pub async fn forget_all_content() -> Result<(), Error> {
     let path = dirs::config_local_dir()
         .expect("Unable to get local config directory")
@@ -70,7 +70,6 @@ pub async fn forget_all_content() -> Result<(), Error> {
 
     Ok(())
 }
-
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Content {
@@ -156,7 +155,6 @@ pub async fn insert_content(title: &str, text: &str) -> Result<Content, Error> {
     Ok(content)
 }
 
-
 pub async fn get_related_chunks(query: Vec<f32>) -> Result<Vec<VectorIndex>, Error> {
     let db = DB.get().await.clone();
     let mut result = db
@@ -181,7 +179,6 @@ pub async fn get_all_content(start: u16, limit: u16) -> Result<Vec<Content>, Err
     Ok(content)
 }
 
-
 // Delete content by id
 pub async fn delete_content(id: &str) -> Result<(), Error> {
     let db = DB.get().await.clone();
@@ -189,11 +186,15 @@ pub async fn delete_content(id: &str) -> Result<(), Error> {
 
     db.query("DELETE FROM vector_index WHERE content_id = $id")
         .bind(("id", id.clone()))
-        .await?.check().context("Unable to delete vector index")?;
-    
+        .await?
+        .check()
+        .context("Unable to delete vector index")?;
+
     db.query("DELETE FROM content WHERE id = $id")
         .bind(("id", id))
-        .await?.check().context("Unable to delete content")?;
+        .await?
+        .check()
+        .context("Unable to delete content")?;
 
     Ok(())
 }
